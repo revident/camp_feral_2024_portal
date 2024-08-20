@@ -17,18 +17,27 @@ long nextRfidPoll = 0;
 #include <DmxOutput.pio.h>
 
 // Declare an instance of the DMX Output
-DmxOutput dmx;
+// DmxOutput dmx;
 
-#define UNIVERSE_LENGTH 68 // 4 + 32 + 32
+#define UNIVERSE_LENGTH 68 // 4 + 32 + 32 RGBW channels
 uint8_t universe[UNIVERSE_LENGTH + 1];
 
+// Hacked up FastLED for PicoDMX! 3.7.3-revident
+#include <FastLED.h>
+//#include <dmx.h>
+#define NUM_LEDS 17 // 68/4 = 17
+CRGB leds[NUM_LEDS];
 
 // DMX Channel Rotation Test
 uint32_t activeScene = 0; // DMX Scene Selection via FIFO 
 uint32_t propScene = 0;
 
 // DMX TX Pin
-const int dmxPin = 16;
+const uint8_t dmxPin = 16;
+
+
+
+
 // Heart Beat LED
 const int ledPin = 25;
 
@@ -63,7 +72,7 @@ void setup() {
     Serial.println("Could not communicate with the Qwiic RFID Reader!!!"); 
 
   // Put the interrupt pin in a known HIGH state. 
-  pinMode(intPin, INPUT_PULLUP); 
+  // pinMode(intPin, INPUT_PULLUP); 
 
   // Want to clear tags sitting on the Qwiic RFID card?
   myRfid.clearTags();
@@ -114,7 +123,9 @@ void setScene(uint32_t _sceneNum) {
 }
 
 void setup1() {
-  dmx.begin(dmxPin);
+  //dmx.begin(dmxPin);
+
+  FastLED.addLeds<DMXPICO, dmxPin, RGB>(leds, NUM_LEDS);
 }
 
 void loop1() {
@@ -145,10 +156,13 @@ void loop1() {
     }
     Serial.println("Switched to DMX scene " + String(activeScene)); 
   }
-
-  dmx.write(universe, UNIVERSE_LENGTH + 1);
+  
+  leds[0] = CRGB::White; FastLED.show(); delay(300);
+  leds[0] = CRGB::Black; FastLED.show(); delay(300);
+  
+  /*dmx.write(universe, UNIVERSE_LENGTH + 1);
   while(dmx.busy()) {
     // Patiently wait, or do other computing stuff
-  }
+  }*/
 
 }
