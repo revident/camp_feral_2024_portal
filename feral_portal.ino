@@ -35,31 +35,8 @@ uint32_t propScene = 0;
 // DMX TX Pin
 const uint8_t dmxPin = 16;
 
-
-
-
 // Heart Beat LED
 const int ledPin = 25;
-
-void sceneBlackOut() {
-  for (int i = 1; i < UNIVERSE_LENGTH + 1; i++) {
-    universe[i] = 0;
-  }
-}
-
-void sceneChannelStrobe() {
- for (int i = 1; i < UNIVERSE_LENGTH + 1; i++) {
-    universe[i] = 127;
-  }
-}
-
-void sceneSolidColorHalfB(uint8_t _rgbwChannel) {
-  /* Take a number representing Red[1], Green[2], Blue[3] or White[4] Channels
-  Set all channels of the color to half brightness */
-  for (int i = _rgbwChannel; i < UNIVERSE_LENGTH + 1; i+=4) {
-    universe[i] = 127;
-  }
-}
 
 void setup() {
   delay(3000); // Grace for PC enumration of USB Serial device 
@@ -117,52 +94,105 @@ void loop() {
 
   digitalWrite(ledPin, LOW); // stop heartbeat LED
 }
+void setup1() {
+  FastLED.addLeds<DMXPICO, dmxPin, RGB>(leds, NUM_LEDS);
+}
+
+void loop1() {
+  // read DMX scene changes from FIFO
+  if (rp2040.fifo.available()) {
+    rp2040.fifo.pop_nb(&activeScene);
+  }
+
+  Serial.print("Starting DMX scene ");
+  Serial.println(activeScene);
+  switch (activeScene) {
+    case 1 : // Red
+      sceneSolidRed(1);
+      break;
+    case 2 : // Green
+      sceneSolidRed(2);
+      break;
+    case 3 : // Blue
+      sceneSolidRed(3);
+      break;
+    case 4 : // White
+      sceneEndCheck();
+      break;
+    default :
+      rainbowCylon();
+  }
+
+}
 
 void setScene(uint32_t _sceneNum) {
   rp2040.fifo.push(_sceneNum);
 }
 
-void setup1() {
-  //dmx.begin(dmxPin);
+void fadeall() { for(int i = 0; i < NUM_LEDS; i++) { leds[i].nscale8(250); } }
 
-  FastLED.addLeds<DMXPICO, dmxPin, RGB>(leds, NUM_LEDS);
+void rainbowCylon() {
+  static uint8_t hue = 0;
+  Serial.print("x");
+  // First slide the led in one direction
+  for(int i = 0; i < NUM_LEDS; i++) {
+      // Set the i'th led to red
+      leds[i] = CHSV(hue++, 255, 255);
+      // Show the leds
+      FastLED.show();
+      // now that we've shown the leds, reset the i'th led to black
+      leds[i] = CRGB::Black;
+      //fadeall();
+      // Wait a little bit before we loop around and do it again
+      delay(100);
+  }
+  Serial.print("x");
+
+  // Now go in the other direction.
+  for(int i = (NUM_LEDS)-1; i >= 0; i--) {
+      // Set the i'th led to red
+      leds[i] = CHSV(hue++, 255, 255);
+      // Show the leds
+      FastLED.show();
+      // now that we've shown the leds, reset the i'th led to black
+      leds[i] = CRGB::Black;
+      //fadeall();
+      // Wait a little bit before we loop around and do it again
+      delay(100);
+  }
 }
 
-void loop1() {
-
-  // read DMX scene changes from FIFO
-  if (rp2040.fifo.available()) {
-    rp2040.fifo.pop_nb(&activeScene);
-    
-    switch (activeScene) {
-      case 1 : // Red
-        sceneBlackOut();
-        sceneSolidColorHalfB(1);
-        break;
-      case 2 : // Green
-        sceneBlackOut();
-        sceneSolidColorHalfB(2);
-        break;
-      case 3 : // Blue
-        sceneBlackOut();
-        sceneSolidColorHalfB(3);
-        break;
-      case 4 : // WhitesceneBlackOut();
-        sceneBlackOut();
-        sceneSolidColorHalfB(4);
-        break;
-      default : // BlackOut
-        sceneBlackOut();
-    }
-    Serial.println("Switched to DMX scene " + String(activeScene)); 
+void sceneSolidRed(uint8_t _rgbwChannel) {
+  /* Take a number representing Red[1], Green[2], Blue[3] or White[4] Channels
+  Set all channels of the color to half brightness */
+  for(int i = 0; i < NUM_LEDS; i++) {
+   leds[i] = CRGB(255, 0, 0);
+    // Show the leds
+   FastLED.show();
+   // now that we've shown the leds, reset the i'th led to black
+    leds[i] = CRGB::Black;
+  delay(100);
   }
-  
-  leds[0] = CRGB::White; FastLED.show(); delay(300);
-  leds[0] = CRGB::Black; FastLED.show(); delay(300);
-  
-  /*dmx.write(universe, UNIVERSE_LENGTH + 1);
-  while(dmx.busy()) {
-    // Patiently wait, or do other computing stuff
-  }*/
+  for(int i = 0; i < NUM_LEDS; i++) {
+    leds[i] = CRGB::Black;
+  }
+  FastLED.show();
+}
 
+void sceneEndCheck() {
+  leds[16] = CRGB(255, 0, 0);
+  FastLED.show();
+  delay(250);
+
+  leds[16] = CRGB(0, 255, 0);
+  FastLED.show();
+  delay(250);
+
+  leds[16] = CRGB(0, 0, 255);
+  FastLED.show();
+  delay(250);
+
+  leds[16] = CRGB::Black;
+  FastLED.show();
+  delay(250);
 }
