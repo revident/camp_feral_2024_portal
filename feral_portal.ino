@@ -12,6 +12,8 @@ String tag;
 const long rfidPollIntvl = 500; //milliseconds
 long nextRfidPoll = 0;
 
+const long globalDelay = 20; //milliseconds
+
 /* DMX Setup */
 #include <DmxOutput.h>
 #include <DmxOutput.pio.h>
@@ -122,9 +124,6 @@ void loop1() {
     default : // Black Out
       sceneBlackOut();
   }
-
-  // Global Throttle, because the 8 light fixures are unstable at full blast.
-  delay(10);
 }
 
 void setScene(uint32_t _sceneNum) {
@@ -167,6 +166,7 @@ void sceneBlackOut() {
     leds[i] = CRGB::Black;
   }
   FastLED.show();
+  delay(globalDelay);
 }
 
 void sceneSolidRed() {
@@ -227,6 +227,7 @@ void pride()
   }
 
   FastLED.show();
+  delay(globalDelay);
 }
 
 void sceneEndCheck() {
