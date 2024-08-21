@@ -12,7 +12,7 @@ String tag;
 const long rfidPollIntvl = 500; //milliseconds
 long nextRfidPoll = 0;
 
-const long globalDelay = 20; //milliseconds
+const long globalDelay = 50; //milliseconds
 
 /* DMX Setup */
 #include <DmxOutput.h>
@@ -71,17 +71,25 @@ void loop() {
 
     unsigned long long int tagNum = std::strtoll(tag.c_str(), nullptr, 10);
 
+/*
+1809315414390
+1320619555118
+1806514646239
+33010926188234
+6901725320020
+*/
+
     switch (tagNum) {
-      case 408416246182 :
+      case 408416246182 : // Black Out Test Card
         setScene(0);
         break;
-      case 601411383637 :
+      case 601411383637 : // Rainbow Test Card
         setScene(1);
         break;
-      case 1337 :
-        setScene(2);
+      case 31337 : // narrative trigger
+        setScene(3);
         break;
-      case 60141224218177 :
+      case 60141224218177 : // Narrative Testing trigger
         setScene(3);
         break;
       case 601411495739 :
