@@ -60,6 +60,26 @@ void setup() {
   pinMode(25, OUTPUT); // heartbeat LED
 }
 
+void keyTag() {
+  static unsigned long keyExpire = 0;
+  static unsigned long keyCount = 0;
+  // check timeout, reset counter to 1 if exceeded
+  // else increment counter, update timeout
+  if (millis() >= keyExpire) {
+    keyExpire = millis() + 60000; // rolling 1 min window from last keyTag detection
+    keyCount = 1;
+  } else {
+    keyCount++; 
+  }
+  Serial.print("Detect keyTag, count is now ");
+  Serial.println(keyCount);
+  
+  if (keyCount >= 5) {
+    setScene(3); // narrative trigger
+    keyExpire = 0;
+  }
+}
+
 void loop() {
 
   digitalWrite(ledPin, HIGH); // start heartbeat LED
@@ -70,14 +90,6 @@ void loop() {
     Serial.println(tag);
 
     unsigned long long int tagNum = std::strtoll(tag.c_str(), nullptr, 10);
-
-/*
-1809315414390
-1320619555118
-1806514646239
-33010926188234
-6901725320020
-*/
 
     switch (tagNum) {
       case 408416246182 : // Black Out Test Card
@@ -92,11 +104,38 @@ void loop() {
       case 60141224218177 : // Narrative Testing Card
         setScene(3);
         break;
-      case 6901725320020 : // Narrative Testing Card
-        setScene(3);
+      case 1809315414390 :
+        keyTag();
         break;
-      case 601411495739 :
-        setScene(4);
+      case 1320619555118 :
+        keyTag();
+        break;
+      case 1806514646239:
+        keyTag();
+        break;
+      case 33010926188234 :
+        keyTag();
+        break;
+      case 6901725320020 :
+        keyTag();
+        break;
+      case 90781234105 :
+        keyTag();
+        break;
+      case 907723551156 :
+        keyTag();
+        break;
+      case 9077233194111 :
+        keyTag();
+        break;
+      case 907722414452 :
+        keyTag();
+        break;
+      case 907715124233 :
+        keyTag();
+        break;
+      case 907725157134 :
+        keyTag();
         break;
     }
   }
