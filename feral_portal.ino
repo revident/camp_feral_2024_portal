@@ -68,6 +68,7 @@ void keyTag() {
   if (millis() >= keyExpire) {
     keyExpire = millis() + 60000; // rolling 1 min window from last keyTag detection
     keyCount = 1;
+    setScene(0); // cancle any current scene
   } else {
     keyCount++; 
   }
