@@ -11,6 +11,7 @@ Qwiic_Rfid myRfid(RFID_ADDR);
 String tag;
 const long rfidPollIntvl = 500; //milliseconds
 long nextRfidPoll = 0;
+long sceneExpire = 0;
 
 const long globalDelay = 20; //milliseconds
 
@@ -60,21 +61,33 @@ void setup() {
   pinMode(25, OUTPUT); // heartbeat LED
 }
 
-void keyTag() {
+void keyTag(unsigned long long thisTag) {
   static unsigned long keyExpire = 0;
   static unsigned long keyCount = 0;
-  // check timeout, reset counter to 1 if exceeded
-  // else increment counter, update timeout
+  static unsigned long long lastTag[MAX_TAG_STORAGE];
+
+  for (int i = 0; i < MAX_TAG_STORAGE; i++) {
+    if (thisTag == lastTag[i]) {
+      keyExpire=0;
+    }
+  }
+
+  // check timeout, reset counter to 0 if exceeded
   if (millis() >= keyExpire) {
     keyExpire = millis() + 60000; // rolling 1 min window from last keyTag detection
-    keyCount = 1;
-    setScene(0); // cancle any current scene
-  } else {
-    keyCount++; 
+    //setScene(0); // cancle any current scene
+    for (int i = 0; i < MAX_TAG_STORAGE; i++) { // pruge the seen tags
+      lastTag[i] = 0;
+    }
+    keyCount = 0; 
   }
+
+  lastTag[keyCount] = thisTag; // add to the seen list
+  keyCount++;
+
   Serial.print("Detect keyTag, count is now ");
   Serial.println(keyCount);
-  
+
   if (keyCount >= 5) {
     setScene(3); // narrative trigger
     keyExpire = 0;
@@ -106,37 +119,37 @@ void loop() {
         setScene(3);
         break;
       case 1809315414390 :
-        keyTag();
+        keyTag(tagNum);
         break;
       case 1320619555118 :
-        keyTag();
+        keyTag(tagNum);
         break;
       case 1806514646239:
-        keyTag();
+        keyTag(tagNum);
         break;
       case 33010926188234 :
-        keyTag();
+        keyTag(tagNum);
         break;
       case 6901725320020 :
-        keyTag();
+        keyTag(tagNum);
         break;
       case 90781234105 :
-        keyTag();
+        keyTag(tagNum);
         break;
       case 907723551156 :
-        keyTag();
+        keyTag(tagNum);
         break;
       case 9077233194111 :
-        keyTag();
+        keyTag(tagNum);
         break;
       case 907722414452 :
-        keyTag();
+        keyTag(tagNum);
         break;
       case 907715124233 :
-        keyTag();
+        keyTag(tagNum);
         break;
       case 907725157134 :
-        keyTag();
+        keyTag(tagNum);
         break;
     }
   }
@@ -157,6 +170,12 @@ void loop1() {
     rp2040.fifo.pop_nb(&activeScene);
     Serial.print("Switching to DMX scene ");
     Serial.println(activeScene);
+
+  }
+
+  if (millis() >= sceneExpire) {
+    sceneExpire = millis() + 300000; // 5 min
+    activeScene = 0;
   }
 
   switch (activeScene) {
