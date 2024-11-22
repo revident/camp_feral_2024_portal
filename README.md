@@ -2,8 +2,8 @@
 
 A stand-alone art installation using RFID triggers and DMX lighting, running from a Raspberry Pi Pico
 
-![[reference/PXL_20240826_003957050.LONG_EXPOSURE-02.ORIGINAL.jpg]]
-![[reference/feral-portal.drawio.png]]
+![Portal shimmering in cabin doorway.](reference/PXL_20240826_003957050.LONG_EXPOSURE-02.ORIGINAL.jpg)
+![Block Diagram of Art piece parts](reference/feral-portal.drawio.png)
 
 ## Dependencies
 - FastLED v3.7.3
