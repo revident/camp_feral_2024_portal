@@ -1,5 +1,16 @@
 # Installation Contoller for Camp Feral Portal art piece.
 
+A stand-alone art installation using RFID triggers and DMX lighting, running from a Raspberry Pi Pico
+
+![[reference/PXL_20240826_003957050.LONG_EXPOSURE-02.ORIGINAL.jpg]]
+![[reference/feral-portal.drawio.png]]
+
+## Dependencies
+- FastLED v3.7.3
+- Pico-DMX
+- SparkFun_Qwiic_RFID_Arduino_Library
+
+## Reference Materials / Parts Used
 - https://www.arduino.cc/reference/en/libraries/pico-dmx/
 - https://github.com/jostlowe/Pico-DMX
 - https://www.sparkfun.com/products/15209

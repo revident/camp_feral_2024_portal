@@ -1,0 +1,115 @@
+From 339481f5fcb2485439472c42aec8e8e9444743e5 Mon Sep 17 00:00:00 2001
+From: Scott Sullivan <scott@revident.net>
+Date: Fri, 22 Nov 2024 14:00:00 -0500
+Subject: [PATCH] Extend FastLED to work with RP2040 PicoDMX Library.
+
+Best effor while learning on a deadline, not suitbale for upstreaming.
+---
+ src/FastLED.h | 17 +++++++++++++++++
+ src/dmx.h     | 46 +++++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 62 insertions(+), 1 deletion(-)
+
+diff --git a/src/FastLED.h b/src/FastLED.h
+index 463a6831..732a2c28 100644
+--- a/src/FastLED.h
++++ b/src/FastLED.h
+@@ -43,6 +43,10 @@
+ #include <DMXSerial.h>
+ #endif
+ 
++//#ifdef DmxOutput_h
++#include <DmxOutput.h>
++//#endif
++
+ #ifdef USE_OCTOWS2811
+ #include <OctoWS2811.h>
+ #endif
+@@ -159,6 +163,9 @@ template<uint8_t DATA_PIN, EOrder RGB_ORDER> class DMXSIMPLE : public DMXSimpleC
+ /// @copydoc DMXSerialController
+ template<EOrder RGB_ORDER> class DMXSERIAL : public DMXSerialController<RGB_ORDER> {};
+ #endif
++//#if defined(DmxOutput_h) || defined(FASTLED_DOXYGEN)
++template<uint8_t DATA_PIN, EOrder RGB_ORDER> class DMXPICO : public DMXPicoController<DATA_PIN, RGB_ORDER> {};
++//#endif
+ #endif
+ /// @} ClocklessChipsets
+ /// @} Chipsets
+@@ -400,6 +407,16 @@ public:
+ 		}
+ 	}
+ 	#endif
++
++	#ifdef FASTSPI_USE_DMX_PICO
++	template<EClocklessChipsets CHIPSET, uint8_t DATA_PIN, EOrder RGB_ORDER=RGB>
++	static CLEDController &addLeds(struct CRGB *data, int nLedsOrOffset, int nLedsIfOffset = 0)
++	{
++		switch(CHIPSET) {
++			case DMX: { static DmxOutput controller; return addLeds(&controller, data, nLedsOrOffset, nLedsIfOffset); }
++		}
++	}
++	#endif
+ 	/// @} Adding 3-wire led controllers
+ #endif
+ 
+diff --git a/src/dmx.h b/src/dmx.h
+index 44a18e66..c4b45b45 100644
+--- a/src/dmx.h
++++ b/src/dmx.h
+@@ -82,9 +82,53 @@ public:
+ 
+ FASTLED_NAMESPACE_END
+ 
++#endif
++
++//#if defined(DmxOutput_h) || defined(FASTLED_DOXYGEN)
++#include <DmxOutput.h>
++//#include <DmxOutput.pio.h>
++
++/// Flag set when the DmxOutput library is included
++#define HAS_DMX_PICO
++
++FASTLED_NAMESPACE_BEGIN
++
++/// DMX512 based LED controller class, using the Pico-DMX library
++/// @tparam RGB_ORDER the RGB ordering for these LEDs
++/// @see https://github.com/jostlowe/Pico-DMX
++/// @see https://en.wikipedia.org/wiki/DMX512
++template <uint8_t DATA_PIN, EOrder RGB_ORDER = RGB> class DMXPicoController : public CPixelLEDController<RGB_ORDER> {
++public:
++	#define UNIVERSE_LENGTH 69 // 4 + 32 + 32 RGBW channels
++	uint8_t universe[UNIVERSE_LENGTH + 1];
++
++	/// Initialize the LED controller
++	DmxOutput dmx;
++	virtual void init() { dmx.begin(DATA_PIN); }
++
++	/// @copydoc CPixelLEDController::showPixels()
++	virtual void showPixels(PixelController<RGB_ORDER> & pixels) {
++		uint16_t iChannel = 1;
++		while(pixels.has(1)) {
++			universe[iChannel++] = pixels.loadAndScale0();
++			universe[iChannel++] = pixels.loadAndScale1();
++			universe[iChannel++] = pixels.loadAndScale2();
++			universe[iChannel++] = 0; // white channel skip
++			pixels.advanceData();
++			pixels.stepDithering();
++		}
++		while (dmx.busy()) { /* Do nothing while the DMX frame transmits */ }
++
++		dmx.write(universe, UNIVERSE_LENGTH + 1);
++		delay(1);
++	}
++};
++
++FASTLED_NAMESPACE_END
++
+ /// @} DMXControllers
+ /// @} Chipsets
+ 
+-#endif
++//#endif
+ 
+ #endif
+-- 
+2.47.0
+
